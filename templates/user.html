@@ -1,0 +1,89 @@
+{% extends "bootstrap/base.html" %}
+<head>
+     <!-- Required meta tags -->
+     <meta charset="utf-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+     <!-- Bootstrap CSS -->
+     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
+     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+       <!--
+    
+    <script defer src="https://use.fontawesome.com/releases/v5.7.1/js/all.js" integrity="sha384-eVEQC9zshBn0rFj4+TU78eNA19HMNigMviK/PU/FFjLXqa/GKPgX58rvt5Z8PLs7" crossorigin="anonymous"></script>
+    FontAwesome JS-->
+    <!-- Theme CSS
+    <link id="theme-style" rel="stylesheet" href="../static/assets/css/theme-1.css">
+    -->
+</head>
+
+<body>
+    <div class="container h-100">
+      <div class="row align-items-center h-100">
+          <div class="col-md-8 col-sm-12 mx-auto">
+              <div class="h-100 justify-content-center">
+                  <div class="chat-container" style="overflow: auto; max-height: 80vh">
+                      <!-- chat messages -->
+                      <div class="chat-message col-md-5 offset-md-7 bot-message">
+                        Welcome to Travel portal. How can I help you?
+                      </div>
+                  </div>
+                  <form id="target">
+                     <input class="input" type="text" value="" placeholder="Enter message..." id="input_message"/>
+                     <input type="submit" hidden>
+                  </form>
+              </div>
+          </div>
+      </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js"></script>
+  <script src="{{ url_for('static', filename='custom.js')}}"></script>
+</body>
+<!--
+<body>
+{% block title %}DJS-WOZ{% endblock %}
+{% block navbar %}
+<div class="navbar navbar-inverse" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle"
+            data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">DJS-WOZ</a>
+        </div>
+    <div class="navbar-collapse collapse">
+        <ul class="nav navbar-nav">
+            <li><a href="/">Home</a></li>
+        </ul>
+    </div>
+</div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Query from User, {{ name }}!</h1>
+    </div>
+    <div class="main-wrapper">
+	    <section class="cta-section theme-bg-light py-5">
+		    <div class="container text-center">
+			    <h2 class="heading">{{query}}</h2>
+			    <form class="signup-form form-inline justify-content-center pt-3">
+                    <div class="form-group">
+                        <label class="sr-only" for="semail">Your email</label>
+                        <input type="text" id="semail" name="semail1" class="form-control mr-md-1 semail" placeholder="Send response">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Send</button>
+                </form>
+		    </div>
+	    </section>
+    </div>
+</div>
+{% endblock %}
+</body>
+-->
+</html>

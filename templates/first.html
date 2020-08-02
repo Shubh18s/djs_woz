@@ -1,0 +1,78 @@
+<!--<meta http-equiv="refresh" content="5"> -->
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block title %}djs_woz{% endblock %}
+{% block navbar %}
+<div class="navbar navbar-inverse" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle"
+            data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">DJS_WOZ</a>
+        </div>
+    <div class="navbar-collapse collapse">
+        <ul class="nav navbar-nav">
+            <li><a href="/">Home</a></li>
+        </ul>
+    </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <!--<<h1>Hello, {% if query %}{{ query }}{% else %}Stranger{% endif %}!</h1>
+        <button id="query_refresh">Refresh</button>-->
+        <div id="place_for_query"></div>
+    </div>
+    <form id="responseForm">
+        <input class="input" type="text" value="" placeholder="Enter Response..." id="input_message"/>
+        <input type="submit" hidden>
+     </form>
+    <!--{{ wtf.quick_form(form)}}-->
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script>
+    $("#document").ready(function(){
+    var text = $(this).val();
+    var myajax = function(){
+        $.ajax({
+            url: "/webhook",
+            type: "get",
+            data: {text},
+            success: function(response) {
+                $("#place_for_query").html(response);
+                myajax();
+            },
+            error: function(xhr) {
+                //Do Something to handle error
+                $("#place_for_query").val("No Query Found!!");
+            }
+        });
+    };
+    myajax();
+});
+
+function submit_response(response) {
+    $.post( "/send_response", {response: response});
+}
+
+$('#responseForm').on('submit', function(){
+    
+    const input_message = $('#input_message').val()
+    // return if the user does not enter any text
+    if (!input_message) {
+      return
+    }
+    // send the message
+    submit_response(input_message)
+});
+</script>
+{% endblock %}
