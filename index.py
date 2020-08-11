@@ -1,12 +1,14 @@
 # /index.py
 from flask import Flask, request, jsonify, render_template, redirect, url_for, session, current_app
 from waitress import serve
+from flask_sqlalchemy import SQLAlchemy
 import dialogflow
 import requests
 import json
 import pusher
 import time
 import pickle
+import os
 
 #from app import app
 from livereload import Server
@@ -18,18 +20,25 @@ from wtforms.validators import Required
 
 from flask_bootstrap import Bootstrap
 
+basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'djs_woz.sqlite')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
+db = SQLAlchemy(app)
+
+
+class UserQuery(db.Model):
+    __tablename__ = 'userquery'
+    id = db.Column(db.Integer, primary_key=True)
+    user_request = db.Column(db.Text, default="Listening...")
+    wizard_response = db.Column(db.Text, default="No Response")
+    def __repr__(self):
+       return("'{0}', '{1}'".format(self.user_request, self.wizard_response))
 
 
 
-class Query(object):
-    def __init__(self, request, response):
-        self.request = request
-        self.response = response
 
-
-
-import os
 SECRET_KEY = os.urandom(32)
 app.config['SECRET_KEY'] = SECRET_KEY
 
