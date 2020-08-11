@@ -1,11 +1,12 @@
 # /index.py
 from flask import Flask, request, jsonify, render_template, redirect, url_for, session, current_app
-import os
+from waitress import serve
 import dialogflow
 import requests
 import json
 import pusher
 import time
+import pickle
 
 #from app import app
 from livereload import Server
@@ -17,8 +18,16 @@ from wtforms.validators import Required
 
 from flask_bootstrap import Bootstrap
 
-
 app = Flask(__name__)
+
+
+
+class Query(object):
+    def __init__(self, request, response):
+        self.request = request
+        self.response = response
+
+
 
 import os
 SECRET_KEY = os.urandom(32)
@@ -190,6 +199,7 @@ def internal_server_error(e):
 # run Flask app
 if __name__ == "__main__":
     #main()
-    app.run()
+    #app.run()
     # server = Server(app.wsgi_app)
     # server.serve()
+    serve(app, host='0.0.0.0', port=80)
