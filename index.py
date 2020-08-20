@@ -159,7 +159,13 @@ def getResponse():
 @app.route('/webhook', methods=['GET'])
 def renderUserQuery():
     if user_query:
-        return render_template('UserQuery.html', query=user_query)
+        current_exchange = UserQuery.query.order_by(UserQuery.id.desc()).first().user_request
+        if current_exchange is None:
+            return render_template('UserQuery.html', query = "Listening...")
+        else:
+            return render_template('UserQuery.html', query = current_exchange)
+        
+        #return render_template('UserQuery.html', query=user_query)
 
 
 def detect_intent_texts(project_id, session_id, text, language_code):
