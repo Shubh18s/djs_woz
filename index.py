@@ -1,7 +1,20 @@
 # /index.py
-from flask import Flask, request, jsonify, render_template, redirect, url_for, session, current_app
+from flask import Flask, request, jsonify, render_template, redirect, url_for, session, current_app, g
+
+from flask_session import Session
+from flask_socketio import SocketIO, emit
+
+
+from flask import _app_ctx_stack
+from flask_cors import CORS
+from sqlalchemy.orm import scoped_session
+from sqlalchemy import Table
+
+import models
+from database import SessionLocal, engine
+
 from waitress import serve
-from flask_sqlalchemy import SQLAlchemy
+#from flask_sqlalchemy import SQLAlchemy
 import dialogflow
 import requests
 import json
@@ -11,33 +24,45 @@ import pickle
 import os
 
 #from app import app
-from livereload import Server
+#from livereload import Server
 
 # wtf-form load
 from flask_wtf import Form
 from wtforms import StringField, SubmitField
 from wtforms.validators import Required
-
 from flask_bootstrap import Bootstrap
 
-basedir = os.path.abspath(os.path.dirname(__file__))
+# Initial Flask App config and Flask-session
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'djs_woz.sqlite')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
-db = SQLAlchemy(app)
+app.config['SESSION_TYPE']='redis'
+sess=Session(app)
+# socketio = SocketIO(app, manage_session=False)
+
+# Creating database metadata and session
+db = SessionLocal() 
+models.Base.metadata.create_all(bind=engine)
+print(models.UserQuery.__table__)
+
+# @app.route('/set/')
+# def set():
+#     session['key'] = 'value'
+#     return 'ok'
+
+# @app.route('/get/')
+# def get():
+#     return session.get('key', 'not set')
 
 
-class UserQuery(db.Model):
-    __tablename__ = 'userquery'
-    id = db.Column(db.Integer, primary_key=True)
-    user_request = db.Column(db.Text, default="Listening...")
-    wizard_response = db.Column(db.Text, default="No Response")
-    def __repr__(self):
-       return("'{0}', '{1}'".format(self.user_request, self.wizard_response))
+## Flask_sql_alchemy config
+# basedir = os.path.abspath(os.path.dirname(__file__))
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'djs_woz.sqlite')
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
+# db = SQLAlchemy(app)
 
 
-
+CORS(app)
+app.session = scoped_session(SessionLocal, scopefunc=_app_ctx_stack.__ident_func__)
 
 SECRET_KEY = os.urandom(32)
 app.config['SECRET_KEY'] = SECRET_KEY
@@ -47,7 +72,6 @@ bootstrap = Bootstrap(app)
 user_query="Listening..."
 wizard_response="No response"
 
-
 cache = {}
 
 class NameForm(Form):
@@ -56,116 +80,65 @@ class NameForm(Form):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    #cache['user_query']="Listening..."
-    #cache['wizard_response']="No response"
-
-    global user_query
-    global wizard_response
-    user_query="Listening..."
-    wizard_response="No response"
-
-    name=None
-    form=NameForm()
-    if form.validate_on_submit():
-        name=form.name.data
-        form.name.data=''
-
-
-        #request.wizard_response=form.name.data
-    #return render_template('index.html')
-    # if g.query:
-    #     return render_template('first.html', form=form, name=name, query=g.query)
-    # else:
-    return render_template('first.html', form=form, name=name, query=user_query)
-    #return render_template('first.html', query=cache['user_query'])
-
-# def getResponseFromWizard(user_query=""):
-#     return redirect(url_for('/', query=cache['user_query']))
+    sess['user_utterance'] = ""
+    sess['wizard_utterance'] = ""
+    return render_template('first.html', query=user_query)
+    
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json(silent=True)
     query = data['queryResult']['queryText']
     
-    #return redirect(url_for('index'), query=query)
-    global user_query
-    global wizard_response
-    #user_query=query
-    time.sleep(2)
-    if(user_query=="Listening..."):
-        user_query=query
-        tempResp = "Did you say, "+query+"?"
-
+    #reply_diag=""
+    #diag_prev_req = db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first() 
+    # if diag_prev_req:
+    #     if(diag_prev_req.wizard_response=="No Response"):
+    #         reply_diag = "Please hold!! We're still getting the response"
+    #     else:
+    #         diag_new_req = models.UserQuery(user_request=query)
+    #         db.add(diag_new_req)
+    #         reply_diag = "Preparing response..."
+        
+    if(sess.get('user_utterance')==""):
+        sess['user_utterance']=query
         reply = {
-            "fulfillmentText": tempResp,
+            "fulfillmentText": "Preparing response. Please hold.",
         }
-        return jsonify(reply)
     else:
-        time.sleep(2)
-        #user_query="Listening..."
-        
         reply = {
-            "fulfillmentText": wizard_response,
+            "fulfillmentText": "Please hold for previous response.",
         }
-        # global wizard_response
-        user_query="Listening..."
-        
-        wizard_response="No response"
-        return jsonify(reply)
-        
-    #wizard_response=""
-    #return jsonify(reply)
-    
+
+    return jsonify(reply)
 
 
-    #return getResponse()
-    
-    # if(wizard_response!=""):
-    #     reply = {
-    #         "fulfillmentText": wizard_response,
-    #     }
-    #     return jsonify(reply)
-    # else:
-    #     time.sleep(2)
-    #     reply = {
-    #         "fulfillmentText": "Sorry!",
-    #         }
-    #     return jsonify(reply)
+# @socketio.on('connect', namespace='/wizard_integration')
+# def wizard_connect():
+#     print('Wizard connected')
 
-    
-    
-    #getResponseFromWizard(query)
+# @socketio.on('disconnect', namespace='/wizard_integration')
+# def wizard_disconnect():
+#     print('Wizard disconnected')
 
-def getResponse():
-    count=0
-    if(wizard_response!=""):
-        reply = {
-            "fulfillmentText": wizard_response,
-        }
-        wizard_response=""
-        return jsonify(reply)
-    else:
-        if(count==0):
-            time.sleep(2)
-            count=1
-            getResponse()
-        else:
-            reply = {
-            "fulfillmentText": "Sorry!",
-            }
-            return jsonify(reply)
-
+# @socketio.on('get user query', namespace='/test')
+# def get_user_query(message):
+#     emit('user query', {'data': message['data']})
 
 @app.route('/webhook', methods=['GET'])
 def renderUserQuery():
-    if user_query:
-        current_exchange = UserQuery.query.order_by(UserQuery.id.desc()).first().user_request
-        if current_exchange is None:
-            return render_template('UserQuery.html', query = "Listening...")
-        else:
-            return render_template('UserQuery.html', query = current_exchange)
-        
-        #return render_template('UserQuery.html', query=user_query)
+    #diag_prev_req = db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first() 
+    
+    # if diag_prev_req:
+    #     if(diag_prev_req.wizard_response=="No Response"):
+    #         return render_template('UserQuery.html', query = diag_prev_req.user_request)
+    # else:
+    #     return render_template('UserQuery.html', query = "Listening...")
+
+    if(sess.get('user_utterance')==""):
+        return render_template('UserQuery.html', query = "Listening...")
+    else:
+        return render_template('UserQuery.html', query = sess.get["user_utterance"])
 
 
 def detect_intent_texts(project_id, session_id, text, language_code):
@@ -217,4 +190,7 @@ if __name__ == "__main__":
     #app.run()
     # server = Server(app.wsgi_app)
     # server.serve()
+    
+    
     serve(app, host='0.0.0.0', port=80)
+    #socketio.run(app)

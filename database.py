@@ -1,25 +1,14 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
 import os
 
 basedir = os.path.abspath(os.path.dirname(__file__))
+SQLALCHEMY_DATABASE_URL = 'sqlite:///' + os.path.join(basedir, 'djs_woz_alchemy.sqlite')
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'djs_woz.sqlite')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, echo=True, connect_args={"check_same_thread": False}
+)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-db = SQLAlchemy(app)
-
-class UserQuery(db.Model):
-    __tablename__ = 'userquery'
-    id = db.Column(db.Integer, primary_key=True)
-    user_request = db.Column(db.Text, default="Listening...")
-    wizard_response = db.Column(db.Text, default="No Response")
-    
-    def __repr__(self):
-        return ('<Req %r Res %r>' % self.request, self.response)
-
-
-if __name__ == "__main__":
-    app.run()
+Base = declarative_base()
