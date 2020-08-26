@@ -8,6 +8,16 @@ class UserQuery(Base):
     id = Column(Integer, primary_key=True)
     user_request = Column(Text, default="Listening...")
     wizard_response = Column(Text, default="No Response")
+
+    '''It will be set to 1 if user says something first'''
+    #user_sent = Column(Integer, default=0)
+
+    '''It will be set to 1 if wizard says something first'''
+    #wizard_sent = Column(Integer, default=0)
+
+    #user_utterance_time = Column(Integer, default=0)
+    #wizard_utterance_time = Column(Integer, default=0)
+
     def __repr__(self):
        return("'{0}', '{1}'".format(self.user_request, self.wizard_response))
 

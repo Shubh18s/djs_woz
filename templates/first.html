@@ -91,5 +91,17 @@ $('#responseForm').on('submit', function(){
     // send the message
     submit_response(input_message)
 });
+
+
+
+
+$(document).ready(function(){
+    var socket = io.connect('http://'+document.domain+':'+location.port+'/queryRenderSocket');
+    socket.on('user utterance', function(msg){
+        $('#log').append('<p>User Query: '+msg.data+'</p>');
+    });
+});
+
 </script>
+
 {% endblock %}
