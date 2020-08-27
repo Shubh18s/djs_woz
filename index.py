@@ -53,36 +53,45 @@ def webhook():
     data = request.get_json(silent=True)
     query = data['queryResult']['queryText']
     global user_utter
-    
-    #db_resp = db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).limit(1)
-    user_utterance = db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().user_request
-    wizard_utterance = db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response
 
-    if (user_utterance != "Listening..." and wizard_utterance != "No Response"):
-        #[[[new record]]] (1,1)
-        user_utter = query
-        new_user_utr = models.UserQuery(user_request=query)
-        db.add(new_user_utr)
-        db.commit()
-        # Add new record above this
-        reply = {
-            #"fulfillmentText": db_resp,
-            "fulfillmentText": "Preparing response. Please hold.",
+
+    if "djs wizard says" in query:
+        temp_query = query
+        reply{
+            "fulfillmentText": temp_query.split("djs wizard says",1)[1],
         }
-    elif (user_utterance == "Listening..." and wizard_utterance != "No Response"):
-        #[[[Update last record]]] (0,1)
-        user_utter = query
-        db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().user_request = query
-        db.commit()
-        reply = {
-            #"fulfillmentText": db_resp,
-            "fulfillmentText": "Preparing response. Please hold.",
-        }
+
     else:
-        #[[[Nothing happens]]] (1,0) 
-        reply = {
-            "fulfillmentText": "Please hold for previous response.",
-        }   
+        #db_resp = db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).limit(1)
+        user_utterance = db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().user_request
+        wizard_utterance = db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response
+
+        if (user_utterance != "Listening..." and wizard_utterance != "No Response"):
+            #[[[new record]]] (1,1)
+            user_utter = query
+            new_user_utr = models.UserQuery(user_request=query)
+            db.add(new_user_utr)
+            db.commit()
+            # Add new record above this
+            reply = {
+                #"fulfillmentText": db_resp,
+                "fulfillmentText": "Preparing response. Please hold.",
+            }
+        elif (user_utterance == "Listening..." and wizard_utterance != "No Response"):
+            #[[[Update last record]]] (0,1)
+            user_utter = query
+            db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().user_request = query
+            db.commit()
+            reply = {
+                #"fulfillmentText": db_resp,
+                "fulfillmentText": "Preparing response. Please hold.",
+            }
+        else:
+            #[[[Nothing happens]]] (1,0) 
+            reply = {
+                "fulfillmentText": "Please hold for previous response.",
+            }   
+
     return jsonify(reply)
 
 
@@ -112,13 +121,14 @@ def detect_intent_texts(project_id, session_id, text, language_code):
 def send_message():
     message = request.form['message']
     project_id = os.getenv('DIALOGFLOW_PROJECT_ID')
-    fulfillment_text = detect_intent_texts(project_id, "unique", "query_response:"+message, 'en')
+    fulfillment_text = detect_intent_texts(project_id, "unique", "djs wizard says"+message, 'en')
     response_text = { "message":  fulfillment_text }
     return jsonify(response_text)
 
 
 @app.route('/send_response', methods=['POST'])
 def send_response():
+    message = request.form['message']
     global user_utter
     global wizard_utter
     
@@ -127,20 +137,24 @@ def send_response():
 
     if (user_utterance != "Listening..." and wizard_utterance != "No Response"):
         #[[[new record]]] (1,1)
-        wizard_utter = request.form['response']
-        new_wiz_utr = models.UserQuery(wizard_response=request.form['response'])
+        wizard_utter = message
+        new_wiz_utr = models.UserQuery(wizard_response=message)
         db.add(new_wiz_utr)
         db.commit()
     elif (user_utterance != "Listening..." and wizard_utterance == "No Response"):
         wizard_utter = request.form['response']
-        db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response = request.form['response']
+        db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response = message
         db.commit()
     else:
         user_utter = "Can't send response. Waiting for user."
         time.sleep(30)
         user_utter="Listening..."
     
-    return wizard_utter
+    project_id = os.getenv('DIALOGFLOW_PROJECT_ID')
+    fulfillment_text = detect_intent_texts(project_id, "unique", "djs wizard says"+message, 'en')
+    response_text = { "message":  fulfillment_text }
+    return jsonify(response_text)
+    #return wizard_utter
 
 @app.errorhandler(404)
 def page_not_found(e):
