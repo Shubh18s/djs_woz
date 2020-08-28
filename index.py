@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for, current_app, g
-
+from flask_assistant import Assistant, ask, tell, event
 #from flask_cors import CORS
 from sqlalchemy.orm import scoped_session
 from sqlalchemy import Table
@@ -23,7 +23,8 @@ from flask_bootstrap import Bootstrap
 
 # Initial Flask App config and Flask-session
 app = Flask(__name__)
-db = SessionLocal() 
+assist = Assistant(app, route='/')
+
 models.Base.metadata.create_all(bind=engine)
 print(models.UserQuery.__table__)
 
@@ -47,61 +48,75 @@ class NameForm(Form):
 def index():
     #return render_template('first.html', query=cache.get("user_utterance"))
     
-    if (db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().user_request == "No Response"):
-        db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().user_request = "Conversation End"
-        db.commit()
-    if (db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response == "No Response"):
-        db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response =  "Conversation End"
-        db.commit()
+    # if (db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().user_request == "No Response"):
+    #     db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().user_request = "Conversation End"
+    #     db.commit()
+    # if (db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response == "No Response"):
+    #     db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response =  "Conversation End"
+    #     db.commit()
     
     return render_template('first.html', query=user_utter)
     
 
-@app.route('/webhook', methods=['POST'])
+#@app.route('/webhook', methods=['POST'])
+@assist.action('Default Fallback Intent')
 def webhook():
+
+    db_user = SessionLocal()
+
     data = request.get_json(silent=True)
     query = data['queryResult']['queryText']
     global user_utter
 
+    # Set global variable that wizard listens to for query
+    user_utter = query
 
-    if "wizard says" in query:
-        temp_query = query
-        reply = {
-            "fulfillmentText": temp_query.split("wizard says",1)[1],
-        }
+    # Add new query to db
+    new_user_utr = models.UserQuery(user_request=query)
+    db_user.add(new_user_utr)
+    db_user.commit()
+
+    time.sleep(3)
+
+    wiz_db_resp = db_user.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response
+    db_user.close()
+    if(wiz_db_resp== "No Response"):
+        return event('attempt-1')
     else:
-        #db_resp = db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).limit(1)
-        user_utterance = db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().user_request
-        wizard_utterance = db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response
+        return tell(wiz_db_resp)
 
-        if (user_utterance != "Listening..." and wizard_utterance != "No Response"):
-            #[[[new record]]] (1,1)
-            user_utter = query
-            new_user_utr = models.UserQuery(user_request=query)
-            db.add(new_user_utr)
-            db.commit()
-            # Add new record above this
-            reply = {
-                #"fulfillmentText": db_resp,
-                "fulfillmentText": "Preparing response. Please hold.",
-            }
-        elif (user_utterance == "Listening..." and wizard_utterance != "No Response"):
-            #[[[Update last record]]] (0,1)
-            user_utter = query
-            db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().user_request = query
-            db.commit()
-            reply = {
-                #"fulfillmentText": db_resp,
-                "fulfillmentText": "Preparing response. Please hold.",
-            }
-        else:
-            #[[[Nothing happens]]] (1,0) 
-            reply = {
-                "fulfillmentText": "Please hold for previous response.",
-            }   
+@assist.action('Default Fallback Intent - Attempt1')
+def attempt1():
+    db_user = SessionLocal()
+    time.sleep(3)
+    wiz_db_resp = db_user.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response
+    db_user.close()
+    if(wiz_db_resp== "No Response"):
+        return event('attempt-2')
+    else:
+        return tell(wiz_db_resp)
 
-    return jsonify(reply)
+@assist.action('Default Fallback Intent - Attempt2')
+def attempt2():
+    db_user = SessionLocal()
+    time.sleep(3)
+    wiz_db_resp = db_user.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response
+    db_user.close()
+    if(wiz_db_resp== "No Response"):
+        return event('attempt-3')
+    else:
+        return tell(wiz_db_resp)
 
+@assist.action('Default Fallback Intent - Attempt3')
+def attempt3():
+    db_user = SessionLocal()
+    time.sleep(3)
+    wiz_db_resp = db_user.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response
+    db_user.close()
+    if(wiz_db_resp== "No Response"):
+        return tell("Sorry, I couldn't find any response to that.")
+    else:
+        return tell(wiz_db_resp)
 
 @app.route('/webhook', methods=['GET'])
 def renderUserQuery():
@@ -109,8 +124,6 @@ def renderUserQuery():
         return render_template('UserQuery.html', query = "")
     else:
         return render_template('UserQuery.html', query = user_utter)
-
-
 
 def detect_intent_texts(project_id, session_id, text, language_code):
     session_client = dialogflow.SessionsClient()
@@ -137,42 +150,30 @@ def send_message():
 @app.route('/send_response', methods=['POST'])
 def send_response():
     message = request.form['response']
+    db_wiz = SessionLocal()
     global user_utter
     global wizard_utter
     
     # User and Wizard utterance from last record
-    user_utterance = db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().user_request
-    wizard_utterance = db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response
+    user_utterance = db_wiz.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().user_request
+    wizard_utterance = db_wiz.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response
 
-    if (user_utterance != "Listening..." and wizard_utterance != "No Response"):
-        #[[[new record]]] (1,1)
-
-        # Setting global variable
-        wizard_utter = message
-
-        # Adding new query
-        new_wiz_utr = models.UserQuery(wizard_response=message)
-        db.add(new_wiz_utr)
-        db.commit()
-    elif (user_utterance != "Listening..." and wizard_utterance == "No Response"):
+    if (user_utterance == user_utter and user_utterance != "Listening..." and wizard_utterance == "No Response"):
 
         # Setting global variable
         wizard_utter = message
 
         # Updating last query wizard response
-        db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response = message
-        db.commit()
-    else:
-        user_utter = "Can't send response. Waiting for user."
-        #time.sleep(30)
-    
+        db_wiz.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response = message
+        db_wiz.commit()
+        db_wiz.close()
     user_utter="Listening..."
     
-    project_id = os.getenv('DIALOGFLOW_PROJECT_ID')
-    fulfillment_text = detect_intent_texts(project_id, "unique", "wizard says "+message, 'en')
-    response_text = { "message":  fulfillment_text }
-    return jsonify(response_text)
-    #return message
+    # project_id = os.getenv('DIALOGFLOW_PROJECT_ID')
+    # fulfillment_text = detect_intent_texts(project_id, "unique", "wizard says "+message, 'en')
+    # response_text = { "message":  fulfillment_text }
+    # return jsonify(response_text)
+    return message
 
 @app.errorhandler(404)
 def page_not_found(e):
