@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template, redirect, url_for, current_app, g
 
-from flask_cors import CORS
+#from flask_cors import CORS
 from sqlalchemy.orm import scoped_session
 from sqlalchemy import Table
 import models
@@ -35,8 +35,9 @@ app.config['SECRET_KEY'] = SECRET_KEY
 
 bootstrap = Bootstrap(app)
 
+
 user_utter="Listening..."
-wizard_utter="No response"
+wizard_utter="No Response"
 
 class NameForm(Form):
     name = StringField('Enter Response...', validators=[Required()])
@@ -45,6 +46,14 @@ class NameForm(Form):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     #return render_template('first.html', query=cache.get("user_utterance"))
+    
+    if (db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().user_request == "No Response"):
+        db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().user_request = "Conversation End"
+        db.commit()
+    if (db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response == "No Response"):
+        db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response =  "Conversation End"
+        db.commit()
+    
     return render_template('first.html', query=user_utter)
     
 
@@ -55,12 +64,11 @@ def webhook():
     global user_utter
 
 
-    if "djs wizard says" in query:
+    if "wizard says" in query:
         temp_query = query
-        reply{
-            "fulfillmentText": temp_query.split("djs wizard says",1)[1],
+        reply = {
+            "fulfillmentText": temp_query.split("wizard says",1)[1],
         }
-
     else:
         #db_resp = db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).limit(1)
         user_utterance = db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().user_request
@@ -128,33 +136,43 @@ def send_message():
 
 @app.route('/send_response', methods=['POST'])
 def send_response():
-    message = request.form['message']
+    message = request.form['response']
     global user_utter
     global wizard_utter
     
+    # User and Wizard utterance from last record
     user_utterance = db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().user_request
     wizard_utterance = db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response
 
     if (user_utterance != "Listening..." and wizard_utterance != "No Response"):
         #[[[new record]]] (1,1)
+
+        # Setting global variable
         wizard_utter = message
+
+        # Adding new query
         new_wiz_utr = models.UserQuery(wizard_response=message)
         db.add(new_wiz_utr)
         db.commit()
     elif (user_utterance != "Listening..." and wizard_utterance == "No Response"):
-        wizard_utter = request.form['response']
+
+        # Setting global variable
+        wizard_utter = message
+
+        # Updating last query wizard response
         db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response = message
         db.commit()
     else:
         user_utter = "Can't send response. Waiting for user."
-        time.sleep(30)
-        user_utter="Listening..."
+        #time.sleep(30)
+    
+    user_utter="Listening..."
     
     project_id = os.getenv('DIALOGFLOW_PROJECT_ID')
-    fulfillment_text = detect_intent_texts(project_id, "unique", "djs wizard says"+message, 'en')
+    fulfillment_text = detect_intent_texts(project_id, "unique", "wizard says "+message, 'en')
     response_text = { "message":  fulfillment_text }
     return jsonify(response_text)
-    #return wizard_utter
+    #return message
 
 @app.errorhandler(404)
 def page_not_found(e):
@@ -172,5 +190,5 @@ if __name__ == "__main__":
     # server.serve()
     
     #app.secret_key=os.urandom(32)
-    #serve(app, host='0.0.0.0', port=80)
-    socketio.run(app)
+    serve(app, host='0.0.0.0', port=80)
+    #socketio.run(app)
