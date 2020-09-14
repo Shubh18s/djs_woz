@@ -55,7 +55,7 @@ def index():
     #     db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response =  "Conversation End"
     #     db.commit()
     
-    return render_template('first.html', query=user_utter)
+    return render_template('index.jsx', query=user_utter)
     
 
 #@app.route('/webhook', methods=['POST'])
@@ -76,47 +76,47 @@ def webhook():
     db_user.add(new_user_utr)
     db_user.commit()
 
-    time.sleep(3)
+    time.sleep(3.4)
 
     wiz_db_resp = db_user.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response
     db_user.close()
     if(wiz_db_resp== "No Response"):
         return event('attempt-1')
     else:
-        return tell(wiz_db_resp)
+        return tell(str('attempt0-'+wiz_db_resp))
 
 @assist.action('Default Fallback Intent - Attempt1')
 def attempt1():
     db_user = SessionLocal()
-    time.sleep(3)
+    time.sleep(3.4)
     wiz_db_resp = db_user.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response
     db_user.close()
     if(wiz_db_resp== "No Response"):
         return event('attempt-2')
     else:
-        return tell(wiz_db_resp)
+        return tell(str('attempt1-'+wiz_db_resp))
 
 @assist.action('Default Fallback Intent - Attempt2')
 def attempt2():
     db_user = SessionLocal()
-    time.sleep(3)
+    time.sleep(3.4)
     wiz_db_resp = db_user.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response
     db_user.close()
     if(wiz_db_resp== "No Response"):
-        return event('attempt-3')
+        return tell("Sorry, I couldn't find any response to that. Could you please repeat?")
     else:
-        return tell(wiz_db_resp)
+        return tell(str('attempt2-'+wiz_db_resp))
 
 @assist.action('Default Fallback Intent - Attempt3')
 def attempt3():
     db_user = SessionLocal()
-    time.sleep(3)
+    time.sleep(3.4)
     wiz_db_resp = db_user.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response
     db_user.close()
     if(wiz_db_resp== "No Response"):
         return tell("Sorry, I couldn't find any response to that.")
     else:
-        return tell(wiz_db_resp)
+        return tell(str('attempt3'+wiz_db_resp))
 
 @app.route('/webhook', methods=['GET'])
 def renderUserQuery():
