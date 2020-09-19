@@ -1,7 +1,6 @@
 <!--<meta http-equiv="refresh" content="5"> -->
 {% extends "bootstrap/base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
-
 {% block title %}djs_woz{% endblock %}
 
 {% block styles %}
@@ -13,7 +12,11 @@
 <link rel="stylesheet" href="{{url_for('.static', filename='css/owl-carousel.css')}}"></link>
 <link rel="stylesheet" href="{{url_for('.static', filename='css/templatemo-style.css')}}"></link>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800"></link>
+{% endblock %}
 
+{% block scripts %}
+<script type="module" src="{{url_for('.static', filename='node_modules/react-tree-graph/src/components/tree.js')}}"></script>
+{{super()}}
 {% endblock %}
 
 {% block navbar %}
@@ -41,7 +44,6 @@
 
 
 {% block content %}
-
 <div class="container">
     <div class="page-header">
         <div id="place_for_query" float="left"></div>
@@ -53,7 +55,7 @@
     
     <section id="video" class="content-section">
         <div class="row">
-            <div class="col-md-4" style="width:50%; margin-top:-12px; float:left;">
+            <div class="col-md-4" style="width:40%; margin-top:-12px; margin-left:2px; float:left;">
                 <div class="panel panel-info">
                 <div class="panel-heading">
                             Realtime Chat
@@ -61,10 +63,10 @@
 					  
 					<div class="panel-body">
                     <div class="h-100 justify-content-center">
-                    <div class="chat-container" style="overflow: auto; max-height: 80vh">
+                    <div class="chat-container" style="overflow: auto; max-height: 80vh; height:400px;">
                         <!-- chat messages -->
-                        <div class="chat-message col-md-5 offset-md-7 bot-message">
-                          Welcome to Travel portal. How can I help you?
+                        <div class="chat-message col-md-5 offset-md-7 bot-message" style="align:right;">
+                          Listening...
                         </div>
                     </div>
                         <form id="responseForm">
@@ -75,8 +77,8 @@
 					</div>   
 			    </div>
             </div>
-            
-            <div class="col-md-4" style="width:50%; float:left;">
+            </div>
+            <div class="col-md-4" style="width:40%;">
             <div class="panel panel-info"style="margin-bottom:5px;">
                         <div class="panel-heading">
                             Name of Current Chat Person
@@ -106,10 +108,10 @@
 
                     </div>                             
             </div>
-        </div>
+            </div>
     </section>
      
-</div>
+
 
 
 <script src="https://fb.me/react-0.14.3.js"></script>
@@ -148,6 +150,13 @@ $('#responseForm').on('submit', function(){
     if (!input_message) {
       return;
     }
+
+    $('.chat-container').append(`
+            <div class="chat-message col-md-5 human-message">
+                ${input_message}
+            </div>
+        `)
+
     // send the message
     submit_response(input_message)
 });
@@ -175,8 +184,28 @@ $('#responseForm').on('submit', function(){
         }
     });
 
+    var CollapsibleTree = React.createClass({
+        data: {
+            name:'Parent',
+            children:[{
+                name: 'Child One'
+            }, {
+                name: 'Child Two'
+            }]
+        },
+        render: function(){
+            return(
+                <Tree data={data}
+                height={400}
+                width={400}/>
+            );
+        }
+    });
+    
+
+
     ReactDOM.render(<div>
-            <QuickMenu></QuickMenu>
+            <QuickMenu></QuickMenu><CollapsibleTree></CollapsibleTree>
         </div>, document.getElementById('quickMenu'))
 </script>
 

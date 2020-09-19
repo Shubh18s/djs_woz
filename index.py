@@ -83,7 +83,7 @@ def webhook():
     if(wiz_db_resp== "No Response"):
         return event('attempt-1')
     else:
-        return tell(str('attempt0-'+wiz_db_resp))
+        return ask(str(wiz_db_resp))
 
 @assist.action('Default Fallback Intent - Attempt1')
 def attempt1():
@@ -94,7 +94,7 @@ def attempt1():
     if(wiz_db_resp== "No Response"):
         return event('attempt-2')
     else:
-        return tell(str('attempt1-'+wiz_db_resp))
+        return ask(str(wiz_db_resp))
 
 @assist.action('Default Fallback Intent - Attempt2')
 def attempt2():
@@ -103,9 +103,9 @@ def attempt2():
     wiz_db_resp = db_user.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response
     db_user.close()
     if(wiz_db_resp== "No Response"):
-        return tell("Sorry, I couldn't find any response to that. Could you please repeat?")
+        return ask("Sorry, I couldn't find any response to that. Could you please repeat?")
     else:
-        return tell(str('attempt2-'+wiz_db_resp))
+        return ask(str(wiz_db_resp))
 
 @assist.action('Default Fallback Intent - Attempt3')
 def attempt3():
@@ -114,9 +114,9 @@ def attempt3():
     wiz_db_resp = db_user.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response
     db_user.close()
     if(wiz_db_resp== "No Response"):
-        return tell("Sorry, I couldn't find any response to that.")
+        return ask("Sorry, I couldn't find any response to that.")
     else:
-        return tell(str('attempt3'+wiz_db_resp))
+        return ask(str('attempt3'+wiz_db_resp))
 
 @app.route('/webhook', methods=['GET'])
 def renderUserQuery():
