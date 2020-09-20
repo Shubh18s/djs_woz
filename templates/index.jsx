@@ -16,6 +16,7 @@
 
 {% block scripts %}
 <script type="module" src="{{url_for('.static', filename='node_modules/react-tree-graph/src/components/tree.js')}}"></script>
+<script type="module" src="{{url_for('.static', filename='static/dist/bundle.js')}}"></script>
 {{super()}}
 {% endblock %}
 
