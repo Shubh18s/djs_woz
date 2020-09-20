@@ -2,6 +2,11 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import App from "./App";
-import Chat_Window from "./chat_window";
-ReactDOM.render(<App />, document.getElementById("content"));
-ReactDOM.render(<Chat_Window />, document.getElementById("bacon"))
+import NavBar from "./NavBar";
+import ChatBox from "./chatBox";
+import QueryTitle from "./QueryTitle";
+
+ReactDOM.render(<QueryTitle />, document.getElementById("hello"));
+ReactDOM.render(<NavBar />, document.getElementById("navbar"));
+ReactDOM.render(<QueryTitle />, document.getElementById("queryTitle"));
+ReactDOM.render(<ChatBox />, document.getElementById("chatbox"));

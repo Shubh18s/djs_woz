@@ -1,0 +1,122 @@
+<!--<meta http-equiv="refresh" content="5"> -->
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% block title %}djs_woz{% endblock %}
+
+{% block styles %}
+{{super()}}
+
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{url_for('static', filename='./dist/bundle.js')}}"></script>
+{{super()}}
+{% endblock %}
+
+{% block navbar %}
+<div class="navbar navbar-inverse" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle"
+            data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="/">DJS_WOZ</a>
+        </div>
+    <div class="navbar-collapse collapse">
+        <ul class="nav navbar-nav">
+            <li><a href="/">Home</a></li>
+        </ul>
+    </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div id="place_for_query" float="left"></div>
+        <div id="quickMenu" float="right"></div>
+    </div>
+    
+    <section id="video" class="content-section">
+        <div class="row">
+            <div class="col-md-4" style="width:40%; margin-top:-12px; margin-left:2px; float:left;">
+                <div class="panel panel-info">
+                <div class="panel-heading">
+                            Chat History
+                        </div>
+					  
+					<div class="panel-body">
+                    <div class="h-100 justify-content-center">
+                    <div class="chat-container" style="overflow: auto; max-height: 80vh; height:400px;">
+                        <!-- chat messages -->
+                        <div class="chat-message col-md-5 offset-md-7 bot-message" style="align:right;">
+                          Listening...
+                        </div>
+                    </div>
+                        <form id="responseForm">
+                            <input class="controls form-control" type="text" placeholder="Enter Response..." id="input_message" style="width:100%; font-size:20px;"/>
+                            <input type="submit" hidden>
+                        </form>
+                        </div>
+					</div>   
+			    </div>
+            </div>
+            
+            <div class="col-md-4" style="width:40%;">
+                <div id="content"></div>                       
+            </div>            
+        </div>
+    </section>
+
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="../static/dist/bundle.js" type="text/javascript" defer></script>
+<script>
+    $("#document").ready(function(){
+    var text = $(this).val();
+    var myajax = function(){
+        $.ajax({
+            url: "/webhook",
+            type: "get",
+            data: {text},
+            success: function(response) {
+                $("#place_for_query").html(response);
+                myajax();
+            },
+            error: function(xhr) {
+                //Do Something to handle error
+                $("#place_for_query").val("No Query Found!!");
+            }
+        });
+    };
+    myajax();
+});
+
+function submit_response(response) {
+    $.post( "/send_response", {response: response});
+}
+
+$('#responseForm').on('submit', function(){
+    const input_message = $('#input_message').val()
+    // return if the user does not enter any text
+    if (!input_message) {
+      return;
+    }
+    $('.chat-container').append(`
+            <div class="chat-message col-md-5 human-message">
+                ${input_message}
+            </div>
+        `)
+    // send the message
+    submit_response(input_message)
+});
+</script>
+
+{% endblock %}

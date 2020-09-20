@@ -55,7 +55,7 @@ def index():
     #     db.query(models.UserQuery).order_by(models.UserQuery.id.desc()).first().wizard_response =  "Conversation End"
     #     db.commit()
     
-    return render_template('index.jsx', query=user_utter)
+    return render_template('index1.html', query=user_utter)
     
 
 #@app.route('/webhook', methods=['POST'])
@@ -122,8 +122,10 @@ def attempt3():
 def renderUserQuery():
     if(user_utter == "Listening..."):
         return render_template('UserQuery.html', query = "")
+        #return '<h5>%s</h5>' % "Listening..."
     else:
         return render_template('UserQuery.html', query = user_utter)
+        #return '<h5>%s</h5>' % user_utter
 
 def detect_intent_texts(project_id, session_id, text, language_code):
     session_client = dialogflow.SessionsClient()
