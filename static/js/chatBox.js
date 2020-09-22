@@ -17,7 +17,7 @@ const user = {
   uid: "user1",
 };
 
-export default class App extends React.Component {
+export default class chatBox extends React.Component {
   render() {
     return (
       <div className="container">

@@ -40,13 +40,20 @@
 {% block content %}
 <div class="container">
     <div class="page-header">
-        <div id="place_for_query" float="left"></div>
-        <div id="quickMenu" float="right"></div>
+        <div class="row">
+            <div id="place_for_query"></div>
+        </div>
     </div>
+    <div class="page-header">
+        <div class="row">
+            <div id="quickMenu"></div>
+        </div>
+    </div>
+    
     
     <section id="video" class="content-section">
         <div class="row">
-            <div class="col-md-4" style="width:40%; margin-top:-12px; margin-left:2px; float:left;">
+            <div class="col-md-4" style="width:30%; margin-top:-12px; margin-left:2px; float:left;">
                 <div class="panel panel-info">
                 <div class="panel-heading">
                             Chat History
@@ -68,13 +75,27 @@
 					</div>   
 			    </div>
             </div>
-            
-            <div class="col-md-4" style="width:40%;">
-                <div id="content"></div>                       
-            </div>            
+            <div class="col-md-4" style="width:60%; margin-top:-12px; margin-left:2px; float:left;">
+                <div class="panel panel-info">
+                <div class="panel-heading">
+                            Should gay marriage be legal in Australia
+                        </div>
+					  
+					<div class="panel-body">
+                    <div class="h-100 justify-content-center">
+                    <div class="chat-container" style="overflow: auto; max-height: 80vh; height:400px;">
+                        <!-- chat messages -->
+                        <div class="chat-message col-md-5 offset-md-7 bot-message" style="align:right;">
+                            <div id="dtree"></div>
+                        </div>
+                    </div>
+                    </div>
+					</div>   
+			    </div>
+            </div>    
         </div>
     </section>
-
+    
 </div>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 <script src="../static/dist/bundle.js" type="text/javascript" defer></script>

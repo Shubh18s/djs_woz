@@ -39,7 +39,7 @@ const items = [
 
 const topId= [0,1];
 
-export default class App extends React.Component {
+export default class script_tree extends React.Component {
   render() {
     return (
       <div>
