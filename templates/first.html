@@ -35,9 +35,10 @@
         <input class="input" type="text" value="" placeholder="Enter Response..." id="input_message"/>
         <input type="submit" hidden>
      </form>
-    <!--{{ wtf.quick_form(form)}}-->
 </div>
 
+<script src="https://fb.me/react-0.14.3.js"></script>
+<script src="https://fb.me/react-dom-0.14.3.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 <script>
     $("#document").ready(function(){
@@ -60,6 +61,24 @@
     myajax();
 });
 
+
+// $(document).ready(function(){
+//     var socket = io.connect('http://' + document.domain + ':' + location.port + '/wizard_integration');
+//     socket.on('user query', function(msg) {
+//         $('#log').append('<p>Received: ' + msg.data + '</p>');
+//     });
+//     $('form#emit').submit(function(event) {
+//         socket.emit('my event', {data: $('#emit_data').val()});
+//         return false;
+//     });
+//     $('form#broadcast').submit(function(event) {
+//         socket.emit('my broadcast event', {data: $('#broadcast_data').val()});
+//         return false;
+//     });
+// });
+
+
+
 function submit_response(response) {
     $.post( "/send_response", {response: response});
 }
@@ -74,5 +93,17 @@ $('#responseForm').on('submit', function(){
     // send the message
     submit_response(input_message)
 });
+
+
+
+
+$(document).ready(function(){
+    var socket = io.connect('http://'+document.domain+':'+location.port+'/queryRenderSocket');
+    socket.on('user utterance', function(msg){
+        $('#log').append('<p>User Query: '+msg.data+'</p>');
+    });
+});
+
 </script>
+
 {% endblock %}
